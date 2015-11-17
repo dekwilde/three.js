@@ -3,8 +3,8 @@
  * @author WestLangley / http://github.com/WestLangley
  *
  * W3C Device Orientation control (http://w3c.github.io/deviceorientation/spec-source-orientation.html)
- */
-
+ */  
+                                                   
 THREE.DeviceOrientationControls = function ( object ) {
 
 	var scope = this;
@@ -15,8 +15,8 @@ THREE.DeviceOrientationControls = function ( object ) {
 	this.enabled = true;
 
 	this.deviceOrientation = {};
-	this.screenOrientation = 0;
-
+	this.screenOrientation = 0; 
+	   
 	var onDeviceOrientationChangeEvent = function ( event ) {
 
 		scope.deviceOrientation = event;
@@ -74,23 +74,51 @@ THREE.DeviceOrientationControls = function ( object ) {
 		scope.enabled = false;
 
 	};
-
+    var heading = 0;
+	var rate = 0.8; 
+	var headingSin = 0;
+	var headingCos = 0; 
+	var betaSin = 0;
+	var betaCos = 0; 
+	var gammaSin = 0;
+	var gammaCos = 0;
+	var headingDelay = 0;
+	var betaDelay = 0;
+	var gammaDelay = 0;
+	
 	this.update = function () {
 
 		if ( scope.enabled === false ) return;
+        
+		
+		
+		if(scope.deviceOrientation.webkitCompassHeading) {
+			heading = -scope.deviceOrientation.webkitCompassHeading;
+		} else {
+			heading = scope.deviceOrientation.alpha;
+		}   
+				
+   	
+		headingSin = rate * headingSin + (1-rate) * Math.sin(heading * (Math.PI / 180));
+	    headingCos = rate * headingCos + (1-rate) * Math.cos(heading * (Math.PI / 180));
+		headingDelay = Math.atan2(headingSin, headingCos) * (180 / Math.PI);  
+		
 
-		var alpha  = scope.deviceOrientation.alpha ? THREE.Math.degToRad( scope.deviceOrientation.alpha ) : 0; // Z
-		var beta   = scope.deviceOrientation.beta  ? THREE.Math.degToRad( scope.deviceOrientation.beta  ) : 0; // X'
-		var gamma  = scope.deviceOrientation.gamma ? THREE.Math.degToRad( scope.deviceOrientation.gamma ) : 0; // Y''
-		var orient = scope.screenOrientation       ? THREE.Math.degToRad( scope.screenOrientation       ) : 0; // O
+		betaSin = rate * betaSin + (1-rate) * Math.sin(scope.deviceOrientation.beta * (Math.PI / 180));
+	    betaCos = rate * betaCos + (1-rate) * Math.cos(scope.deviceOrientation.beta * (Math.PI / 180));
+		betaDelay = Math.atan2(betaSin, betaCos) * (180 / Math.PI);
+		
+		gammaSin = rate * gammaSin + (1-rate) * Math.sin(scope.deviceOrientation.gamma * (Math.PI / 180));
+	    gammaCos = rate * gammaCos + (1-rate) * Math.cos(scope.deviceOrientation.gamma * (Math.PI / 180));
+		gammaDelay = Math.atan2(gammaSin, gammaCos) * (180 / Math.PI);
+		
+
+		var alpha  = headingDelay 	? THREE.Math.degToRad( headingDelay  ) 	 : 0;
+		var beta   = betaDelay  	? THREE.Math.degToRad( betaDelay  ) 	 : 0; // X'
+		var gamma  = gammaDelay 	? THREE.Math.degToRad( gammaDelay ) 	 : 0; // Y''
+		var orient = scope.screenOrientation ? THREE.Math.degToRad( scope.screenOrientation ) : 0; // O
 
 		setObjectQuaternion( scope.object.quaternion, alpha, beta, gamma, orient );
-
-	};
-
-	this.dispose = function () {
-
-		this.disconnect();
 
 	};
 
